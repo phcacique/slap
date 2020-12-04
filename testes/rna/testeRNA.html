@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Teste RNA</title>
+    <meta charset="utf-8" />
+    <script type="text/javascript" src="../../js/slap.js"></script>
+    <!--    <script type="text/javascript" src="js/tracking-min.js"></script>-->
+    <!--    <script type="text/javascript" src="js/brain/brain-gh-pages/brain-0.6.3.js"></script>-->
+    <link rel="stylesheet" type="text/css" href="estilo_loader.css" />
+    <style>
+        small {
+            font-size: 0.6em;
+        }
+        
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        
+        #resultados {
+            background-color: #f0f0f0;
+            width: 100%;
+            height: 200px;
+            overflow: auto;
+            padding: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="loading">
+
+        <div class="cube-wrapper">
+            <div class="cube-folding">
+                <span class="leaf1"></span>
+                <span class="leaf2"></span>
+                <span class="leaf3"></span>
+                <span class="leaf4"></span>
+            </div>
+            <span class="loading" data-name="Loading">Loading</span>
+        </div>
+
+    </div>
+    <div id="images" class="canvas-parent">
+        <canvas id="initCanvas" class="canvas-img"></canvas>
+    </div>
+    <div id="resultados"></div>
+    <script>
+        var resultados = document.getElementById("resultados");
+        var slap = new Slap({
+            imageSrc: 'img/14771682040.png',
+            //            imageSrc: 'img/14771682040.png',
+            file: 'slapnet_min.json',
+            threshold: 0.7,
+            canvas: document.getElementById('initCanvas')
+        });
+        slap.onRecognized = function () {
+            var commands = slap.getCommands();
+            var scenePoints = slap.getScenePoints();
+            var resp = "";
+            //console.log("COMMANDS", commands);
+            resp += "COMMANDS<br><br>";
+            for (var i = 0; i < commands.length; i++) {
+                resp += "Command " + (i + 1) + " <small>timeline: "+( commands[i].timeline.index   )+"</small><br>";
+                resp += "<small><i>" + commands[i].error + "</i></small><br>";
+                if (commands[i].control != null)
+                    resp += "Control: " + commands[i].control.bestValue.key + " <small>index: "+commands[i].control.index+" (" + commands[i].control.bestValue.value + ")</small>" + "<br>";
+                else resp += "Control: not found<br>";
+                resp += "Points: <br>";
+                for (var j = 0; j < commands[i].points.length; j++) {
+                    resp += "P" + j + ": " + commands[i].points[j].bestValue.key + " <small>index: "+ commands[i].points[j].index +" (" + commands[i].points[j].bestValue.value + ")</small>" + "<br>";
+                }
+                resp += "<hr>";
+            }
+            resp += "POINTS<br><br>";
+            for(var i=0; i<scenePoints.length; i++){
+                resp += "Point "+scenePoints[i].name+"<br>";
+                resp += "( x: "+ (scenePoints[i].pointObject.x + scenePoints[i].pointObject.width/2)+", y: "+ (scenePoints[i].pointObject.y + scenePoints[i].pointObject.height/2)+")<hr>";
+            }
+            
+            
+            resultados.innerHTML += resp;
+        };
+        slap.test();
+    </script>
+</body>
+
+</html>

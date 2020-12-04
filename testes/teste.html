@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script type="application/javascript">
+        var canvas, ctx, img, cw, ch;
+
+var img;
+
+window.onload = function(){
+  canvas = document.getElementById("canvas");
+  ctx = canvas.getContext('2d');
+  cw = window.innerWidth*0.8;
+  ch = window.innerHeight*0.7;
+  canvas.width = cw;
+  canvas.height = ch;
+  
+  img = new Image();
+//  img.setAttribute('crossOrigin', 'anonymous');
+  img.onload = init;
+  img.src = ;
+
+}
+
+function init(){
+  ctx.drawImage(img,0,0,cw,ch);
+  getImagedata();
+}
+
+function getImagedata(){
+  console.log("oi")
+  var imgData = ctx.getImageData(0,0,100,100);
+  console.log(imgData.data);
+}
+    </script>
+</head>
+
+<body>
+    <canvas id="canvas"></canvas>
+</body>
+
+</html>

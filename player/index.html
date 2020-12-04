@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>SLAP</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" type="text/css" href="css/style.css" />
+    <link rel="stylesheet" type="text/css" href="css/preloader.css" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script type="text/javascript" src="js/cacique_1_0_0.min.js"></script>
+    <script type="text/javascript" src="js/main.js"></script>
+</head>
+
+<body>
+    <section id="player">
+        <header>
+            <i class="material-icons icon" style="display:none">menu</i>
+            <div style="display:none">
+                <input type="checkbox" id="cb_gesture"/>
+                <label for="cb_gesture"><i class="material-icons icon">gesture</i></label>
+            </div>
+        </header>
+        <canvas id="canvas"></canvas>
+        <div id="preloader" class="preloader loading">
+            <span class="slice"></span>
+            <span class="slice"></span>
+            <span class="slice"></span>
+            <span class="slice"></span>
+            <span class="slice"></span>
+            <span class="slice"></span>
+        </div>
+        <section id="control">
+            <div id="bar">
+                <div id="bar-active"></div>
+            </div>
+            <div id="cursor"></div>
+            <nav>
+                <div></div>
+                <div>
+                    <i class="material-icons icon" id="prev_frame">skip_previous</i>
+                    <i class="material-icons icon" id="but_play">play_arrow</i>
+                    <i class="material-icons icon" id="next_frame">skip_next</i>
+                </div>
+                <div id="duration_play">
+                    00:00
+                </div>
+            </nav>
+        </section>
+        <footer>
+            <article>
+                <p id="title">Carregando</p>
+                <p id="last_update"></p>
+                <p id="description">Por favor, aguarde!</p>
+            </article>
+            <article>
+                <div id="author-info">
+                    <div class="avatar-div">
+                        <img alt="avatar" src="img/avatar1.png" id="useravatar" class="avatar" />
+                    </div>
+                    <aside>
+                        <p id="author-name">phcacique</p>
+                        <p id="author-email">phcacique@gmail.com</p>
+                    </aside>
+                </div>
+                <div id="info"></div>
+            </article>
+        </footer>
+    </section>
+</body>
+
+</html>

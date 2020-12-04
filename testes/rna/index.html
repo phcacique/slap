@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Treinamento RNA</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" type="text/css" href="estilo_loader.css" />
+    <script type="text/javascript" src="js/tracking-min.js"></script>
+    <script type="text/javascript" src="brain-0.6.3b.js"></script>
+    <style>
+        input[type="text"] {
+            width: 50px
+        }
+    </style>
+
+</head>
+
+<body>
+    <div id="loading">
+
+        <div class="cube-wrapper">
+            <div class="cube-folding">
+                <span class="leaf1"></span>
+                <span class="leaf2"></span>
+                <span class="leaf3"></span>
+                <span class="leaf4"></span>
+            </div>
+            <span class="loading" data-name="Loading">Loading</span>
+        </div>
+
+    </div>
+    <div id="images" class="canvas-parent">
+        <canvas id="initCanvas" class="canvas-img"></canvas>
+    </div>
+    <div id='outValues'></div>
+    <button onclick="train()">train network</button>
+    <button onclick="reload()">reload</button>
+    <script>
+        var trainVector = [];
+        var outputValue = "cam";
+        var imgsrc = 'img/14804634611.png';
+        var canvas = document.getElementById('initCanvas');
+        var loading = document.getElementById('loading');
+        var context = canvas.getContext('2d');
+        var divX = 15;
+        var divY = 15;
+        var outValues = document.getElementById('outValues');
+        var cont = 0;
+        var total = 0;
+        var tracker2;
+        var posX = 0,
+            posY = 0;
+
+        function reload(){
+            window.location.reload(true);
+        }
+        
+        function loadJSON(callback) {
+
+            var xobj = new XMLHttpRequest();
+            xobj.overrideMimeType("application/json");
+            xobj.open('GET', 'slapnet_old.json', true); // Replace 'my_data' with the path to your file
+            xobj.onreadystatechange = function () {
+                if (xobj.readyState == 4 && xobj.status == "200") {
+                    // Required use of an anonymous callback as .open will NOT return a value but simply returns undefined in asynchronous mode
+                    callback(xobj.responseText);
+                }
+            };
+            xobj.send(null);
+        }
+
+        function train() {
+
+            loadJSON(function (response) {
+                // Parse JSON string into object
+                var actual_JSON = JSON.parse(response);
+                var net = new brain.NeuralNetwork({
+                    hiddenLayers: [4],
+                    learningRate: 0.6 // global learning rate, useful when training using streams
+                });
+                net.fromJSON(actual_JSON);
+                
+
+                for (var i = 0; i < trainVector.length; i++) {
+                    var obj = {};
+                    obj[document.getElementById('out' + i).value] = 1;
+                    trainVector[i].output = obj;
+                    console.log(i + " - " + JSON.stringify(trainVector[i]));
+                }
+
+                var data = net.getData();
+                for (var i = 0; i < data.length; i++) {
+                    trainVector.push(data[i]);
+                }
+
+                var net = new brain.NeuralNetwork({
+                    hiddenLayers: [4],
+                    learningRate: 0.6 // global learning rate, useful when training using streams
+                });
+
+
+                //                net.train(trainVector, {
+                //                    errorThresh: 0.005, // error threshold to reach
+                //                    iterations: 20000, // maximum training iterations
+                //                    log: true, // console.log() progress periodically
+                //                    logPeriod: 10, // number of iterations between logging
+                //                    learningRate: 0.3 // learning rate
+                //                });
+
+                net.train(trainVector);
+
+                var url = 'data:text/json;charset=utf8,' + encodeURIComponent(JSON.stringify(net.toJSON()));
+                window.open(url, '_blank');
+                window.focus();
+
+
+            });
+
+
+
+
+        }
+
+        function getContextInformation() {
+            var canvas = document.getElementById('initCanvas');
+
+            tracking.ColorTracker.registerColor('threshold', function (r, g, b) {
+                return r > 0;
+            });
+
+            var tracker = new tracking.ColorTracker(['threshold']);
+            tracker.setMinDimension(2);
+            tracker.setMinGroupSize(2);
+
+
+
+
+            tracker.on('track', function (event) {
+                cont = 0;
+                total = event.data.length;
+                event.data.forEach(function (rect) {
+
+                    var worker = new Worker('doWork.js');
+
+                    worker.addEventListener('message', function (e) {
+                        var rect = e.data;
+                        var data;
+                        console.log((cont + 1) + " de " + total);
+                        data = generateData(rect.x, rect.y, rect.width, rect.height, rect.color);
+
+                        draw(rect.x, rect.y, rect.width, rect.height, "#f00", data, cont);
+                        cont++;
+                        trainVector.push({
+                            input: data,
+                            output: [outputValue]
+                        });
+
+                        if (cont == total) loading.style.display = "none";
+                    }, false);
+
+                    worker.postMessage(rect);
+
+                });
+
+            });
+
+
+
+            var canvasParent = document.querySelector('.canvas-parent');
+
+            function generateData(x, y, w, h, color) {
+                var data = [];
+
+                var stepX = w / divX;
+                var stepY = h / divY;
+
+                //divisões em Y
+                for (b = 0; b < divY; b++) {
+                    var y0 = y + b * stepY;
+                    var y1 = y + (b + 1) * stepY;
+
+                    //divisões em X
+                    for (var a = 0; a < divX; a++) {
+                        var x0 = x + a * stepX;
+                        var x1 = x + (a + 1) * stepX;
+                        data.push(0);
+
+
+                        var isOk = !isCanvasBlank(createContext("canvas" + b + "-" + a, canvas, x0, y0, x1 - x0, y1 - y0));
+                        data[data.length - 1] = (isOk) ? 1 : 0;
+
+                    }
+                }
+                return data;
+            }
+
+            function isCanvasBlank(canvas) {
+                var blank = document.createElement('canvas');
+                blank.width = canvas.width;
+                blank.height = canvas.height;
+
+                return canvas.toDataURL() == blank.toDataURL();
+            }
+
+            function rgbToHex(r, g, b) {
+                if (r > 255 || g > 255 || b > 255)
+                    throw "Invalid color component";
+                var p = ((r << 16) | (g << 8) | b).toString(16);
+                return "#" + ("000000" + p).slice(-6);
+            }
+
+            function draw(x, y, w, h, color, data, num) {
+                context.fillStyle = "rgba(255,0,0,0.2)";
+                var cont = 0;
+                var stepX = w / divX;
+                var stepY = h / divY;
+                context.beginPath();
+                context.strokeStyle = color;
+                context.rect(x, y, w, h);
+                context.stroke();
+                context.font = "20px Georgia";
+                context.fillText(num, x + w + 10, y);
+
+                outValues.innerHTML += num + ": <input type='text' id='out" + num + "' value='"+outputValue+"'/><br>";
+
+                for (var j = 0; j < divX; j++) {
+                    for (var i = 0; i < divY; i++) {
+                        if (data[cont] == 1) {
+                            context.beginPath();
+                            context.rect(x + i * stepX, y + j * stepY, stepX, stepY);
+                            context.fill();
+                        }
+                        cont++;
+                    }
+                }
+            }
+
+            tracking.track('#initCanvas', tracker);
+
+
+        }
+
+        var image = new Image();
+        image.onload = function () {
+
+            canvas.width = image.width;
+            canvas.height = image.height;
+            context.drawImage(image, 0, 0, image.width, image.height);
+            var imageData = context.getImageData(0, 0, image.width, image.height);
+            var gray = tracking.Image.grayscale(imageData.data, image.width, image.height, true);
+            context.putImageData(new ImageData(gray, image.width, image.height), 0, 0);
+            getContextInformation();
+        };
+//                image.src = 'img/14701504770.png';
+                image.src = imgsrc;
+//        image.src = 'img/14701565990.png';
+//                        image.src = 'img/14701565810.png';
+
+
+
+        function createContext(name, oldcanvas, x, y, width, height) {
+            var canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            canvas.getContext('2d').drawImage(oldcanvas, x, y, width, height, 0, 0, width, height);
+            //document.body.appendChild(canvas);
+            //canvas.setAttribute("id", name);
+            //            canvas.style.display = "hidden";
+            return canvas;
+        }
+    </script>
+    
+</body>
+
+</html>
